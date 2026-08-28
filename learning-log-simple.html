@@ -1,0 +1,1483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Learning Log</title>
+<style>
+  /* ── Reset & Base ── */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f4f6f8; color: #222; min-height: 100vh; }
+  button { cursor: pointer; font-family: inherit; }
+  input, select, textarea { font-family: inherit; font-size: 14px; padding: 8px 10px; border: 1px solid #ccc; border-radius: 5px; width: 100%; background: #fff; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: #e6a817; }
+  textarea { resize: vertical; }
+
+  /* ── Layout ── */
+  .app { display: flex; height: 100vh; overflow: hidden; }
+
+  /* ── Sidebar ── */
+  .sidebar { width: 220px; flex-shrink: 0; background: #1e2a3a; color: #dde3ed; display: flex; flex-direction: column; overflow: hidden; }
+  .sidebar-logo { padding: 18px 16px 12px; border-bottom: 1px solid #2e3d52; display: flex; align-items: center; gap: 10px; }
+  .logo-mark { width: 34px; height: 34px; background: #e6a817; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px; color: #000; }
+  .logo-name { font-weight: bold; font-size: 14px; }
+  .logo-sub { font-size: 11px; color: #8899aa; }
+
+  .sidebar-clock { padding: 10px 16px; border-bottom: 1px solid #2e3d52; text-align: center; }
+  .clock-time { font-size: 22px; font-weight: bold; color: #e6a817; letter-spacing: 2px; }
+  .clock-date { font-size: 11px; color: #8899aa; margin-top: 2px; }
+
+  .sidebar-section { padding: 10px 16px 4px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: #8899aa; }
+  .sidebar-nav { list-style: none; padding: 0 8px; }
+  .sidebar-nav li { margin: 2px 0; }
+  .sidebar-nav button { width: 100%; padding: 8px 10px; border-radius: 6px; font-size: 13px; display: flex; align-items: center; gap: 8px; color: #aabbc9; background: none; border: none; text-align: left; }
+  .sidebar-nav button:hover { background: #2e3d52; color: #fff; }
+  .sidebar-nav button.active { background: rgba(230,168,23,0.2); color: #e6a817; }
+  .nav-count { margin-left: auto; font-size: 11px; background: #2e3d52; padding: 2px 7px; border-radius: 20px; color: #8899aa; }
+
+  .folder-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px 4px; font-size: 11px; text-transform: uppercase; color: #8899aa; }
+  .folder-add-btn { background: none; border: none; color: #8899aa; font-size: 18px; cursor: pointer; }
+  .folder-add-btn:hover { color: #e6a817; }
+  .folder-list { flex: 1; overflow-y: auto; padding: 0 8px 8px; }
+  .folder-item { display: flex; align-items: center; gap: 7px; padding: 7px 10px; border-radius: 6px; cursor: pointer; }
+  .folder-item:hover { background: #2e3d52; }
+  .folder-item.active { background: #2e3d52; }
+  .folder-name { font-size: 13px; color: #aabbc9; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .folder-item.active .folder-name { color: #fff; }
+  .folder-pin-btn { background: none; border: none; font-size: 12px; color: #8899aa; cursor: pointer; opacity: 0; }
+  .folder-item:hover .folder-pin-btn { opacity: 1; }
+  .folder-pin-btn.pinned { opacity: 1; color: #e6a817; }
+
+  .sidebar-tools { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 8px; border-top: 1px solid #2e3d52; }
+  .tool-btn { padding: 8px 4px; border-radius: 6px; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 9px; color: #8899aa; background: none; border: none; }
+  .tool-btn:hover { background: #2e3d52; color: #e6a817; }
+
+  /* ── Main Area ── */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  .topbar { padding: 12px 20px; border-bottom: 1px solid #dce3ea; background: #fff; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .topbar-title { font-weight: bold; font-size: 16px; flex: 1; }
+  .topbar-title span { color: #e6a817; }
+  .search-wrap { display: flex; align-items: center; gap: 6px; background: #f4f6f8; border: 1px solid #dce3ea; border-radius: 6px; padding: 6px 10px; width: 200px; }
+  .search-wrap:focus-within { border-color: #e6a817; }
+  .search-wrap input { background: none; border: none; font-size: 13px; padding: 0; width: auto; flex: 1; }
+  .topbar-actions { display: flex; gap: 6px; }
+  .topbar-btn { padding: 7px 14px; border-radius: 6px; font-size: 12px; font-weight: 500; border: 1px solid #ccc; background: #fff; color: #555; display: flex; align-items: center; gap: 5px; }
+  .topbar-btn:hover { border-color: #e6a817; color: #e6a817; background: rgba(230,168,23,0.08); }
+  .topbar-btn.primary { background: #e6a817; color: #000; border-color: #e6a817; font-weight: bold; }
+  .topbar-btn.primary:hover { background: #c98d10; }
+
+  .content { flex: 1; overflow-y: auto; padding: 20px; }
+
+  /* ── Stat Cards ── */
+  .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .stat-card { background: #fff; border: 1px solid #dce3ea; border-radius: 10px; padding: 14px 16px; }
+  .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #888; margin-bottom: 5px; }
+  .stat-num { font-size: 26px; font-weight: bold; line-height: 1; }
+  .stat-num.amber { color: #e6a817; }
+  .stat-num.blue { color: #4a9eff; }
+  .stat-num.teal { color: #00c89a; }
+  .stat-num.violet { color: #8b72f0; }
+  .stat-sub { font-size: 11px; color: #888; margin-top: 4px; }
+  .mini-bar { height: 4px; background: #eee; border-radius: 2px; margin-top: 8px; overflow: hidden; }
+  .mini-fill { height: 100%; border-radius: 2px; }
+  .mini-fill.amber { background: #e6a817; }
+  .mini-fill.blue { background: #4a9eff; }
+  .mini-fill.teal { background: #00c89a; }
+  .mini-fill.violet { background: #8b72f0; }
+
+  /* ── Section Header ── */
+  .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .section-head h2 { font-size: 13px; font-weight: bold; color: #666; text-transform: uppercase; letter-spacing: 0.1em; }
+  .section-head-actions { display: flex; gap: 6px; }
+  .filter-btn { padding: 5px 12px; border-radius: 6px; font-size: 11px; border: 1px solid #dce3ea; background: #fff; color: #888; cursor: pointer; }
+  .filter-btn:hover, .filter-btn.active { background: rgba(230,168,23,0.1); border-color: #e6a817; color: #e6a817; }
+
+  /* ── Cards ── */
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .lib-card { background: #fff; border: 1px solid #dce3ea; border-radius: 10px; padding: 14px; cursor: pointer; position: relative; overflow: hidden; transition: box-shadow 0.15s; }
+  .lib-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; }
+  .lib-card.amber::before { background: #e6a817; }
+  .lib-card.teal::before { background: #00c89a; }
+  .lib-card.violet::before { background: #8b72f0; }
+  .lib-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+  .card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; }
+  .card-icon-wrap { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .card-icon-wrap.amber { background: rgba(230,168,23,0.12); }
+  .card-icon-wrap.teal { background: rgba(0,200,154,0.1); }
+  .card-icon-wrap.violet { background: rgba(139,114,240,0.12); }
+  .card-badge { font-size: 10px; padding: 3px 8px; border-radius: 20px; font-weight: bold; }
+  .card-badge.reading { background: rgba(74,158,255,0.12); color: #4a9eff; }
+  .card-badge.done { background: rgba(0,200,154,0.1); color: #00c89a; }
+  .card-badge.queued { background: #f0f0f0; color: #888; }
+  .card-title { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+  .card-author { font-size: 12px; color: #888; }
+  .card-tags { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+  .ctag { font-size: 10px; background: #f0f0f0; color: #666; padding: 2px 7px; border-radius: 4px; }
+  .card-prog { margin-top: 8px; }
+  .prog-row { display: flex; justify-content: space-between; font-size: 11px; color: #888; margin-bottom: 4px; }
+  .prog-track { height: 4px; background: #eee; border-radius: 2px; overflow: hidden; }
+  .prog-fill { height: 100%; border-radius: 2px; }
+  .prog-fill.amber { background: #e6a817; }
+  .prog-fill.teal { background: #00c89a; }
+  .prog-fill.violet { background: #8b72f0; }
+  .card-note { font-size: 12px; color: #888; margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee; font-style: italic; line-height: 1.5; }
+  .card-actions { position: absolute; top: 8px; right: 8px; display: flex; gap: 4px; opacity: 0; }
+  .lib-card:hover .card-actions { opacity: 1; }
+  .ca-btn { width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; background: #eee; border: none; color: #666; cursor: pointer; }
+  .ca-btn.del:hover { background: #fde8e8; color: #d33; }
+
+  /* ── Pinned Folders ── */
+  .pinned-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+  .pinned-folder-chip { display: flex; align-items: center; gap: 6px; padding: 7px 14px; background: rgba(230,168,23,0.1); border: 1px solid #e6a817; border-radius: 20px; font-size: 12px; color: #c98d10; cursor: pointer; }
+  .pinned-folder-chip:hover { background: rgba(230,168,23,0.2); }
+
+  /* ── Empty State ── */
+  .empty { text-align: center; padding: 3rem 2rem; color: #aaa; grid-column: 1 / -1; }
+  .empty-icon { font-size: 2.5rem; margin-bottom: 10px; opacity: 0.4; }
+  .empty p { font-size: 14px; line-height: 1.7; }
+
+  /* ── Overlays / Panels ── */
+  .panel-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; align-items: center; justify-content: center; padding: 16px; }
+  .panel-overlay.open { display: flex; }
+  .panel { background: #fff; border: 1px solid #dce3ea; border-radius: 12px; width: 100%; max-width: 480px; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; }
+  .panel-lg { max-width: 580px; }
+  .panel-head { padding: 16px 18px 12px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 10px; }
+  .panel-head h3 { font-size: 15px; font-weight: bold; flex: 1; }
+  .panel-close { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #888; background: none; border: none; cursor: pointer; }
+  .panel-close:hover { background: #f0f0f0; color: #333; }
+  .panel-body { padding: 18px; overflow-y: auto; flex: 1; }
+  .panel-foot { padding: 12px 18px; border-top: 1px solid #eee; display: flex; gap: 8px; justify-content: flex-end; }
+
+  /* ── Form Helpers ── */
+  .fg { margin-bottom: 12px; }
+  .fl { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin-bottom: 4px; }
+  .frow { display: flex; gap: 10px; }
+  .frow .fg { flex: 1; }
+  .range-row { display: flex; align-items: center; gap: 10px; }
+  .range-row input[type=range] { flex: 1; accent-color: #e6a817; }
+  .range-val { font-size: 12px; font-weight: bold; min-width: 34px; text-align: right; color: #e6a817; }
+
+  /* ── Buttons ── */
+  .btn { padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 500; border: 1px solid #ccc; background: #fff; color: #555; cursor: pointer; }
+  .btn:hover { background: #f5f5f5; }
+  .btn-amber { background: #e6a817; color: #000; border-color: #e6a817; font-weight: bold; }
+  .btn-amber:hover { background: #c98d10; }
+  .btn-red { border-color: #e04040; color: #e04040; }
+  .btn-red:hover { background: #fde8e8; }
+  .btn-sm { padding: 5px 11px; font-size: 12px; }
+
+  /* ── Calendar ── */
+  .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .cal-nav-btn { padding: 5px 10px; border-radius: 6px; font-size: 14px; background: none; border: 1px solid #dce3ea; cursor: pointer; }
+  .cal-nav-btn:hover { background: #f0f0f0; }
+  .cal-month { font-size: 14px; font-weight: bold; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-top: 8px; }
+  .cal-day-name { text-align: center; font-size: 10px; color: #888; padding: 5px 0; }
+  .cal-day { min-height: 34px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; color: #555; }
+  .cal-day:hover { background: #f0f0f0; }
+  .cal-day.today { background: rgba(230,168,23,0.15); color: #c98d10; font-weight: bold; }
+  .cal-day.other-month { color: #ccc; }
+  .cal-day.has-reminder { position: relative; }
+  .cal-day.has-reminder::after { content: ''; width: 4px; height: 4px; background: #00c89a; border-radius: 50%; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); }
+
+  /* ── Calculator ── */
+  .calc-display { background: #f4f6f8; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; text-align: right; }
+  .calc-expr { font-size: 12px; color: #aaa; min-height: 18px; }
+  .calc-result { font-size: 28px; font-weight: bold; color: #e6a817; }
+  .calc-btns { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .calc-btn { padding: 12px; border-radius: 7px; font-size: 14px; font-weight: 500; background: #f0f0f0; border: 1px solid #dce3ea; cursor: pointer; }
+  .calc-btn:hover { background: #e0e0e0; }
+  .calc-btn.op { color: #e6a817; background: rgba(230,168,23,0.08); }
+  .calc-btn.eq { background: #e6a817; color: #000; font-weight: bold; }
+  .calc-btn.eq:hover { background: #c98d10; }
+  .calc-btn.clear { color: #e04040; background: rgba(224,64,64,0.08); }
+
+  /* ── Notes ── */
+  .notes-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+  .note-item { background: #f4f6f8; border-radius: 6px; padding: 10px 12px; cursor: pointer; border: 1px solid #dce3ea; }
+  .note-item:hover { border-color: #ccc; }
+  .note-item.active { border-color: #e6a817; }
+  .note-item-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .note-item-preview { font-size: 12px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .note-item-date { font-size: 10px; color: #aaa; margin-top: 3px; }
+  .notes-editor { display: flex; flex-direction: column; gap: 8px; }
+  .notes-editor input { font-size: 15px; font-weight: 600; background: transparent; border: none; border-bottom: 1px solid #dce3ea; border-radius: 0; padding: 6px 0; }
+  .notes-editor input:focus { border-bottom-color: #e6a817; }
+  .notes-editor textarea { height: 180px; }
+
+  /* ── Reminders ── */
+  .reminder-list { display: flex; flex-direction: column; gap: 6px; }
+  .rem-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: #f4f6f8; border-radius: 6px; border: 1px solid #dce3ea; }
+  .rem-check { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #ccc; flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+  .rem-check.done { background: #00c89a; border-color: #00c89a; color: #fff; }
+  .rem-item.done-item .rem-text { text-decoration: line-through; color: #aaa; }
+  .rem-text { font-size: 13px; flex: 1; }
+  .rem-date { font-size: 11px; color: #888; }
+  .rem-del { background: none; border: none; color: #aaa; font-size: 14px; cursor: pointer; padding: 3px; }
+  .rem-del:hover { color: #e04040; }
+
+  /* ── File Upload ── */
+  .upload-zone { border: 2px dashed #ccc; border-radius: 10px; padding: 28px; text-align: center; cursor: pointer; }
+  .upload-zone:hover, .upload-zone.drag { border-color: #e6a817; background: rgba(230,168,23,0.06); }
+  .upload-zone p { font-size: 13px; color: #888; margin-top: 6px; }
+  .uz-icon { font-size: 2.5rem; margin-bottom: 6px; opacity: 0.5; }
+  .file-list { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+  .file-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: #f4f6f8; border-radius: 6px; border: 1px solid #dce3ea; }
+  .file-icon { font-size: 18px; flex-shrink: 0; }
+  .file-info { flex: 1; min-width: 0; }
+  .file-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .file-size { font-size: 11px; color: #888; }
+  .file-actions { display: flex; gap: 4px; }
+  .fa-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; background: none; border: none; color: #888; cursor: pointer; }
+  .fa-btn:hover { background: #e0e0e0; color: #e6a817; }
+
+  /* ── Deleted Items ── */
+  .del-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: #f4f6f8; border-radius: 6px; border: 1px solid #dce3ea; opacity: 0.8; margin-bottom: 6px; }
+  .del-info { flex: 1; }
+  .del-title { font-size: 13px; color: #555; }
+  .del-meta { font-size: 11px; color: #aaa; margin-top: 2px; }
+  .del-actions { display: flex; gap: 4px; }
+
+  /* ── Toast ── */
+  .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 999; display: flex; flex-direction: column; gap: 6px; }
+  .toast { background: #fff; border: 1px solid #dce3ea; border-radius: 6px; padding: 10px 14px; font-size: 13px; min-width: 180px; box-shadow: 0 3px 12px rgba(0,0,0,0.15); transform: translateX(120%); transition: transform 0.25s; }
+  .toast.show { transform: translateX(0); }
+  .toast.success { border-color: #00c89a; color: #00a07a; }
+  .toast.error { border-color: #e04040; color: #e04040; }
+  .toast.info { border-color: #e6a817; color: #c98d10; }
+
+  /* ── Icon Picker ── */
+  .icon-picker { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+  .icon-picker span { font-size: 1.4rem; cursor: pointer; padding: 4px; border-radius: 6px; border: 2px solid transparent; }
+  .icon-picker span.selected { border-color: #e6a817; }
+
+  /* ── Profile Bar ── */
+  .profile-bar { padding: 10px 12px; border-top: 1px solid #2e3d52; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  .profile-bar:hover { background: #2e3d52; }
+  .profile-avatar { width: 34px; height: 34px; border-radius: 50%; background: #e6a817; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; color: #000; flex-shrink: 0; }
+  .profile-info { flex: 1; min-width: 0; }
+  .profile-name { font-size: 13px; font-weight: 600; color: #dde3ed; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .profile-email { font-size: 10px; color: #8899aa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .profile-gear { font-size: 14px; color: #8899aa; }
+
+  /* ── Settings Panel ── */
+  .settings-section { margin-bottom: 18px; }
+  .settings-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin-bottom: 8px; font-weight: bold; }
+  .settings-btn { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #dce3ea; background: #f9f9f9; color: #333; font-size: 13px; display: flex; align-items: center; gap: 10px; margin-bottom: 8px; text-align: left; }
+  .settings-btn:hover { border-color: #e6a817; background: rgba(230,168,23,0.06); }
+  .settings-btn.danger { border-color: #f0caca; color: #c0392b; background: #fff8f8; }
+  .settings-btn.danger:hover { background: #fde8e8; border-color: #e04040; }
+  .settings-btn .s-icon { font-size: 16px; width: 22px; text-align: center; }
+
+  /* ── Account List ── */
+  .account-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; border: 1px solid #dce3ea; background: #f9f9f9; margin-bottom: 8px; cursor: pointer; }
+  .account-item:hover { border-color: #e6a817; background: rgba(230,168,23,0.06); }
+  .account-item.active-account { border-color: #e6a817; background: rgba(230,168,23,0.08); }
+  .account-avatar { width: 32px; height: 32px; border-radius: 50%; background: #e6a817; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px; color: #000; flex-shrink: 0; }
+  .account-avatar.blue { background: #4a9eff; }
+  .account-avatar.teal { background: #00c89a; }
+  .account-avatar.violet { background: #8b72f0; }
+  .account-info { flex: 1; min-width: 0; }
+  .account-name { font-size: 13px; font-weight: 600; color: #222; }
+  .account-email { font-size: 11px; color: #888; }
+  .account-check { color: #e6a817; font-size: 16px; }
+
+  /* ── Login Screen ── */
+  .login-screen { position: fixed; inset: 0; background: #f4f6f8; display: flex; align-items: center; justify-content: center; z-index: 1000; }
+  .login-box { background: #fff; border: 1px solid #dce3ea; border-radius: 14px; padding: 36px 32px; width: 100%; max-width: 380px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+  .login-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+  .login-logo .logo-mark { width: 40px; height: 40px; font-size: 16px; }
+  .login-logo-text { font-size: 20px; font-weight: bold; }
+  .login-logo-sub { font-size: 12px; color: #888; }
+  .login-box h2 { font-size: 18px; font-weight: bold; margin-bottom: 6px; }
+  .login-box p { font-size: 13px; color: #888; margin-bottom: 20px; }
+  .login-field { margin-bottom: 14px; }
+  .login-field label { display: block; font-size: 12px; color: #666; margin-bottom: 5px; font-weight: 500; }
+  .login-field input { width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 7px; font-size: 14px; }
+  .login-field input:focus { outline: none; border-color: #e6a817; }
+  .login-btn { width: 100%; padding: 11px; border-radius: 7px; background: #e6a817; color: #000; font-size: 14px; font-weight: bold; border: none; cursor: pointer; margin-top: 4px; }
+  .login-btn:hover { background: #c98d10; }
+  .login-divider { text-align: center; font-size: 12px; color: #aaa; margin: 14px 0; }
+  .login-accounts { display: flex; flex-direction: column; gap: 8px; }
+  .login-account-btn { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 8px; border: 1px solid #dce3ea; background: #f9f9f9; cursor: pointer; font-size: 13px; color: #333; }
+  .login-account-btn:hover { border-color: #e6a817; background: rgba(230,168,23,0.06); }
+
+  /* ── Responsive ── */
+  @media (max-width: 720px) {
+    .stat-row { grid-template-columns: repeat(2, 1fr); }
+    .sidebar { width: 190px; }
+  }
+  @media (max-width: 560px) {
+    .sidebar { display: none; }
+    .stat-row { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">LL</div>
+    <div>
+      <div class="logo-name">Learning Log</div>
+      <div class="logo-sub">Simple Edition</div>
+    </div>
+  </div>
+
+  <div class="sidebar-clock">
+    <div class="clock-time" id="clock-time">00:00:00</div>
+    <div class="clock-date" id="clock-date"></div>
+  </div>
+
+  <p class="sidebar-section">Navigation</p>
+  <ul class="sidebar-nav" id="main-nav">
+    <li><button class="active" onclick="navTo('library', this)">📚 All Libraries <span class="nav-count" id="nc-all">0</span></button></li>
+    <li><button onclick="navTo('books', this)">📗 Books <span class="nav-count" id="nc-books">0</span></button></li>
+    <li><button onclick="navTo('code', this)">📦 Code Libs <span class="nav-count" id="nc-code">0</span></button></li>
+    <li><button onclick="navTo('resources', this)">🎓 Resources <span class="nav-count" id="nc-res">0</span></button></li>
+    <li><button onclick="openPanel('panel-notes')">📝 Notes</button></li>
+    <li><button onclick="openPanel('panel-reminders')">🔔 Reminders</button></li>
+    <li><button onclick="openPanel('panel-deleted')">🗑️ Recently Deleted</button></li>
+  </ul>
+
+  <div class="folder-header">
+    <span>Folders</span>
+    <button class="folder-add-btn" onclick="openPanel('panel-new-folder')" title="New folder">+</button>
+  </div>
+  <div class="folder-list" id="folder-list"></div>
+
+  <div class="sidebar-tools">
+    <button class="tool-btn" onclick="openPanel('panel-calendar')">📅<span>Cal</span></button>
+    <button class="tool-btn" onclick="openPanel('panel-calc')">🧮<span>Calc</span></button>
+    <button class="tool-btn" onclick="openPanel('panel-upload')">📤<span>Upload</span></button>
+    <button class="tool-btn" onclick="openPanel('panel-search-folder')">🔍<span>Search</span></button>
+  </div>
+
+  <div class="profile-bar" onclick="openPanel('panel-settings')" title="Settings">
+    <div class="profile-avatar" id="sidebar-avatar">?</div>
+    <div class="profile-info">
+      <div class="profile-name" id="sidebar-name">Not signed in</div>
+      <div class="profile-email" id="sidebar-email">—</div>
+    </div>
+    <span class="profile-gear">⚙️</span>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">All <span>Libraries</span></div>
+    <div class="search-wrap">
+      <span style="color:#aaa;font-size:13px">🔍</span>
+      <input type="text" placeholder="Search entries…" id="global-search" oninput="renderContent()" />
+    </div>
+    <div class="topbar-actions">
+      <button class="topbar-btn" onclick="exportData()">⬇ Export</button>
+      <button class="topbar-btn" onclick="shareData()">↗ Share</button>
+      <button class="topbar-btn primary" onclick="openAddEntry()">+ Add Entry</button>
+    </div>
+  </div>
+  <div class="content" id="main-content"></div>
+</main>
+</div>
+
+<!-- ══ PANELS ══ -->
+
+<!-- Add / Edit Entry -->
+<div class="panel-overlay" id="panel-entry" onclick="bgClose(event,'panel-entry')">
+  <div class="panel panel-lg">
+    <div class="panel-head">
+      <h3 id="entry-panel-title">Add Entry</h3>
+      <button class="panel-close" onclick="closePanel('panel-entry')">✕</button>
+    </div>
+    <div class="panel-body">
+      <div class="frow">
+        <div class="fg">
+          <label class="fl">Type</label>
+          <select id="e-type">
+            <option value="book">📗 Book</option>
+            <option value="code">📦 Code Library</option>
+            <option value="resource">🎓 Resource</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="fl">Status</label>
+          <select id="e-status">
+            <option value="reading">In Progress</option>
+            <option value="done">Done</option>
+            <option value="queued">Queued</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg"><label class="fl">Title *</label><input id="e-title" type="text" placeholder="e.g. Clean Code, React, CS50…" /></div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Author / Source</label><input id="e-author" type="text" placeholder="Author, publisher, platform…" /></div>
+        <div class="fg"><label class="fl">Folder</label><select id="e-folder"><option value="">No Folder</option></select></div>
+      </div>
+      <div class="fg"><label class="fl">Tags (comma-separated)</label><input id="e-tags" type="text" placeholder="python, ml, ux…" /></div>
+      <div class="fg">
+        <label class="fl">Progress</label>
+        <div class="range-row">
+          <input type="range" id="e-progress" min="0" max="100" value="0" step="5" oninput="document.getElementById('epv').textContent=this.value+'%'" />
+          <span class="range-val" id="epv">0%</span>
+        </div>
+      </div>
+      <div class="fg"><label class="fl">Notes</label><textarea id="e-notes" rows="3" placeholder="Key takeaways…"></textarea></div>
+    </div>
+    <div class="panel-foot">
+      <button class="btn" onclick="closePanel('panel-entry')">Cancel</button>
+      <button class="btn btn-amber" onclick="saveEntry()">Save Entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- New Folder -->
+<div class="panel-overlay" id="panel-new-folder" onclick="bgClose(event,'panel-new-folder')">
+  <div class="panel" style="max-width:360px">
+    <div class="panel-head"><h3>New Folder</h3><button class="panel-close" onclick="closePanel('panel-new-folder')">✕</button></div>
+    <div class="panel-body">
+      <div class="fg"><label class="fl">Folder Name</label><input id="folder-name-input" type="text" placeholder="e.g. Machine Learning…" /></div>
+      <div class="fg">
+        <label class="fl">Icon</label>
+        <div class="icon-picker" id="icon-picker">
+          <span class="selected" data-icon="📁" onclick="pickIcon(this)">📁</span>
+          <span data-icon="🗂️" onclick="pickIcon(this)">🗂️</span>
+          <span data-icon="📂" onclick="pickIcon(this)">📂</span>
+          <span data-icon="🌟" onclick="pickIcon(this)">🌟</span>
+          <span data-icon="🚀" onclick="pickIcon(this)">🚀</span>
+          <span data-icon="💡" onclick="pickIcon(this)">💡</span>
+          <span data-icon="🎯" onclick="pickIcon(this)">🎯</span>
+          <span data-icon="🔬" onclick="pickIcon(this)">🔬</span>
+        </div>
+      </div>
+    </div>
+    <div class="panel-foot">
+      <button class="btn" onclick="closePanel('panel-new-folder')">Cancel</button>
+      <button class="btn btn-amber" onclick="saveFolder()">Create Folder</button>
+    </div>
+  </div>
+</div>
+
+<!-- Calendar -->
+<div class="panel-overlay" id="panel-calendar" onclick="bgClose(event,'panel-calendar')">
+  <div class="panel panel-lg">
+    <div class="panel-head"><h3>📅 Calendar</h3><button class="panel-close" onclick="closePanel('panel-calendar')">✕</button></div>
+    <div class="panel-body">
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="calNav(-1)">◀</button>
+        <span class="cal-month" id="cal-month-label"></span>
+        <button class="cal-nav-btn" onclick="calNav(1)">▶</button>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div style="margin-top:14px; padding-top:12px; border-top:1px solid #eee;">
+        <p style="font-size:11px; color:#888; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.08em;">Selected date reminders</p>
+        <div id="cal-reminders-for-day" style="font-size:13px; color:#888;">Click a date to see reminders.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Calculator -->
+<div class="panel-overlay" id="panel-calc" onclick="bgClose(event,'panel-calc')">
+  <div class="panel" style="max-width:320px">
+    <div class="panel-head"><h3>🧮 Calculator</h3><button class="panel-close" onclick="closePanel('panel-calc')">✕</button></div>
+    <div class="panel-body">
+      <div class="calc-display">
+        <div class="calc-expr" id="calc-expr"></div>
+        <div class="calc-result" id="calc-result">0</div>
+      </div>
+      <div class="calc-btns">
+        <button class="calc-btn clear" onclick="calcClear()">C</button>
+        <button class="calc-btn op" onclick="calcInput('(')">(</button>
+        <button class="calc-btn op" onclick="calcInput(')')">)</button>
+        <button class="calc-btn op" onclick="calcInput('/')">÷</button>
+        <button class="calc-btn" onclick="calcInput('7')">7</button>
+        <button class="calc-btn" onclick="calcInput('8')">8</button>
+        <button class="calc-btn" onclick="calcInput('9')">9</button>
+        <button class="calc-btn op" onclick="calcInput('*')">×</button>
+        <button class="calc-btn" onclick="calcInput('4')">4</button>
+        <button class="calc-btn" onclick="calcInput('5')">5</button>
+        <button class="calc-btn" onclick="calcInput('6')">6</button>
+        <button class="calc-btn op" onclick="calcInput('-')">−</button>
+        <button class="calc-btn" onclick="calcInput('1')">1</button>
+        <button class="calc-btn" onclick="calcInput('2')">2</button>
+        <button class="calc-btn" onclick="calcInput('3')">3</button>
+        <button class="calc-btn op" onclick="calcInput('+')">+</button>
+        <button class="calc-btn" style="grid-column:span 2" onclick="calcInput('0')">0</button>
+        <button class="calc-btn" onclick="calcInput('.')">.</button>
+        <button class="calc-btn eq" onclick="calcEval()">=</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Notes -->
+<div class="panel-overlay" id="panel-notes" onclick="bgClose(event,'panel-notes')">
+  <div class="panel panel-lg" style="max-width:600px">
+    <div class="panel-head">
+      <h3>📝 Notes</h3>
+      <button class="btn btn-amber btn-sm" onclick="newNote()" style="margin-right:8px">+ New</button>
+      <button class="panel-close" onclick="closePanel('panel-notes')">✕</button>
+    </div>
+    <div class="panel-body" style="display:flex; gap:12px; padding:14px;">
+      <div style="width:180px; flex-shrink:0; border-right:1px solid #eee; padding-right:12px;">
+        <div class="notes-list" id="notes-list"></div>
+      </div>
+      <div style="flex:1;">
+        <div class="notes-editor" id="notes-editor">
+          <p style="color:#aaa; font-size:13px;">Select a note or create a new one.</p>
+        </div>
+      </div>
+    </div>
+    <div class="panel-foot">
+      <button class="btn btn-red btn-sm" onclick="deleteNote()">Delete Note</button>
+      <button class="btn btn-amber" onclick="saveNote()">Save Note</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reminders -->
+<div class="panel-overlay" id="panel-reminders" onclick="bgClose(event,'panel-reminders')">
+  <div class="panel panel-lg">
+    <div class="panel-head"><h3>🔔 Reminders</h3><button class="panel-close" onclick="closePanel('panel-reminders')">✕</button></div>
+    <div class="panel-body">
+      <div class="frow" style="margin-bottom:10px;">
+        <div class="fg"><label class="fl">Reminder</label><input id="rem-text" type="text" placeholder="e.g. Finish React chapter…" /></div>
+        <div class="fg" style="max-width:150px;"><label class="fl">Date</label><input id="rem-date" type="date" /></div>
+      </div>
+      <button class="btn btn-amber btn-sm" style="margin-bottom:12px;" onclick="addReminder()">+ Add Reminder</button>
+      <div class="reminder-list" id="reminder-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- File Upload -->
+<div class="panel-overlay" id="panel-upload" onclick="bgClose(event,'panel-upload')">
+  <div class="panel panel-lg">
+    <div class="panel-head"><h3>📤 Files</h3><button class="panel-close" onclick="closePanel('panel-upload')">✕</button></div>
+    <div class="panel-body">
+      <div class="upload-zone" id="upload-zone"
+        onclick="document.getElementById('file-input').click()"
+        ondragover="handleDragOver(event)"
+        ondrop="handleDrop(event)"
+        ondragleave="this.classList.remove('drag')">
+        <div class="uz-icon">☁️</div>
+        <p style="font-size:14px; font-weight:600; color:#333;">Drop files here or click to browse</p>
+        <p>PDFs, images, text files, anything</p>
+      </div>
+      <input type="file" id="file-input" multiple style="display:none" onchange="handleFileInput(this)" />
+      <div class="file-list" id="file-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Search Folder -->
+<div class="panel-overlay" id="panel-search-folder" onclick="bgClose(event,'panel-search-folder')">
+  <div class="panel" style="max-width:380px">
+    <div class="panel-head"><h3>🔍 Search Folders</h3><button class="panel-close" onclick="closePanel('panel-search-folder')">✕</button></div>
+    <div class="panel-body">
+      <div class="fg"><input type="text" placeholder="Search folders…" oninput="renderFolderSearch(this.value)" id="folder-search-input" /></div>
+      <div id="folder-search-results" style="margin-top:10px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Recently Deleted -->
+<div class="panel-overlay" id="panel-deleted" onclick="bgClose(event,'panel-deleted')">
+  <div class="panel panel-lg">
+    <div class="panel-head">
+      <h3>🗑️ Recently Deleted</h3>
+      <button class="btn btn-red btn-sm" onclick="emptyTrash()" style="margin-right:8px;">Empty Trash</button>
+      <button class="panel-close" onclick="closePanel('panel-deleted')">✕</button>
+    </div>
+    <div class="panel-body" id="deleted-list"><p style="color:#aaa; font-size:13px;">Nothing in trash.</p></div>
+  </div>
+</div>
+
+<!-- Settings Panel -->
+<div class="panel-overlay" id="panel-settings" onclick="bgClose(event,'panel-settings')">
+  <div class="panel" style="max-width:400px">
+    <div class="panel-head"><h3>⚙️ Settings</h3><button class="panel-close" onclick="closePanel('panel-settings')">✕</button></div>
+    <div class="panel-body">
+
+      <!-- Profile info -->
+      <div class="settings-section">
+        <div class="settings-section-title">Your Profile</div>
+        <div style="display:flex;align-items:center;gap:14px;padding:14px;background:#f9f9f9;border:1px solid #dce3ea;border-radius:10px;margin-bottom:8px;">
+          <div class="profile-avatar" id="settings-avatar" style="width:48px;height:48px;font-size:20px;">?</div>
+          <div>
+            <div id="settings-name" style="font-size:15px;font-weight:bold;color:#222;">Not signed in</div>
+            <div id="settings-email" style="font-size:12px;color:#888;margin-top:2px;">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Account actions -->
+      <div class="settings-section">
+        <div class="settings-section-title">Account</div>
+        <button class="settings-btn" onclick="openPanel('panel-switch-account');closePanel('panel-settings')">
+          <span class="s-icon">🔄</span> Switch Account
+        </button>
+        <button class="settings-btn danger" onclick="logout()">
+          <span class="s-icon">🚪</span> Log Out
+        </button>
+      </div>
+
+      <!-- App info -->
+      <div class="settings-section">
+        <div class="settings-section-title">About</div>
+        <div style="font-size:12px;color:#888;line-height:1.7;padding:10px 14px;background:#f9f9f9;border-radius:8px;border:1px solid #eee;">
+          <strong>Learning Log</strong> — Simple Edition<br>
+          Tracks books, code libraries & learning resources.<br>
+          Data is saved locally in your browser.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Switch Account Panel -->
+<div class="panel-overlay" id="panel-switch-account" onclick="bgClose(event,'panel-switch-account')">
+  <div class="panel" style="max-width:400px">
+    <div class="panel-head"><h3>🔄 Switch Account</h3><button class="panel-close" onclick="closePanel('panel-switch-account')">✕</button></div>
+    <div class="panel-body">
+      <div class="settings-section-title" style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:#888;font-weight:bold;margin-bottom:10px;">Saved Accounts</div>
+      <div id="account-list"></div>
+      <div style="border-top:1px solid #eee;margin:14px 0;"></div>
+      <button class="settings-btn" onclick="closePanel('panel-switch-account');showLogin('add')">
+        <span class="s-icon"></span> Add Another Account
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Login Screen (shown when no active session) -->
+<div class="login-screen" id="login-screen" style="display:none;">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="logo-mark">LL</div>
+      <div>
+        <div class="login-logo-text">Learning Log</div>
+        <div class="login-logo-sub">Simple Edition</div>
+      </div>
+    </div>
+    <h2 id="login-heading">Welcome back</h2>
+    <p id="login-sub">Sign in or pick a saved account.</p>
+
+    <div id="saved-accounts-wrap">
+      <div class="login-accounts" id="saved-accounts-list"></div>
+      <div class="login-divider" id="login-divider">— or sign in with a new account —</div>
+    </div>
+
+    <div class="login-field">
+      <label for="login-name">Your Name</label>
+      <input type="text" id="login-name" placeholder="e.g. Alex Smith" autocomplete="name" />
+    </div>
+    <div class="login-field">
+      <label for="login-email">Email</label>
+      <input type="email" id="login-email" placeholder="you@example.com" autocomplete="email" />
+    </div>
+    <button class="login-btn" onclick="doLogin()">Continue →</button>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// ── Data ──
+const SK = 'llsimple_v1';
+let state = { entries: [], folders: [], notes: [], reminders: [], files: [], deleted: [] };
+let activeNav = 'library', activeFolder = null, editingId = null, activeNoteId = null;
+let calDate = new Date(), selectedCalDay = null;
+let calcExpr = '';
+let chosenIcon = '📁';
+
+function load() {
+  // data loading is handled per-account in loadAccountData()
+}
+
+function logout() {
+  const active = getActiveAccount();
+  sessionStorage.removeItem('ll_session');
+  localStorage.removeItem(ACTIVE_KEY);
+  state = { entries:[], folders:[], notes:[], reminders:[], files:[], deleted:[] };
+  closePanel('panel-settings');
+  document.getElementById('sidebar-avatar').textContent = '?';
+  document.getElementById('sidebar-name').textContent = 'Not signed in';
+  document.getElementById('sidebar-email').textContent = '—';
+  if (active) toast(`👋 Logged out of ${active.name}`, 'info');
+  setTimeout(function(){ window.location.href = 'learning_log_home.html'; }, 900);
+}
+
+function initApp() {
+
+  const session = JSON.parse(
+    sessionStorage.getItem('ll_session') || 'null'
+  );
+
+  if (session) {
+
+    const account = {
+      id: session.uid,
+      name: session.name,
+      email: session.email
+    };
+
+    setActiveAccount(account);
+
+    loadAccountData(account);
+    updateProfileUI(account);
+    renderContent();
+
+    return;
+  }
+
+  const active = getActiveAccount();
+
+  if (!active) {
+    showLogin('welcome');
+  } else {
+    loadAccountData(active);
+    updateProfileUI(active);
+    renderContent();
+  }
+}
+
+function getUsers() { return JSON.parse(localStorage.getItem('ll_users') || '[]'); }
+
+// save() is defined below with account-aware key — do not shadow it here
+function uid() { return Math.random().toString(36).slice(2, 9); }
+
+function seed() {
+  state.folders = [
+    { id: 'f1', name: 'Machine Learning', icon: '🔬', pinned: true },
+    { id: 'f2', name: 'Web Dev', icon: '🌐', pinned: false },
+    { id: 'f3', name: 'System Design', icon: '🏗️', pinned: true },
+  ];
+  state.entries = [
+    { id: uid(), type: 'book', title: 'The Pragmatic Programmer', author: 'Thomas & Hunt', status: 'done', progress: 100, tags: ['software', 'craft'], notes: 'Changed how I think about code quality.', folder: 'f2' },
+    { id: uid(), type: 'book', title: 'Designing Data-Intensive Applications', author: 'Martin Kleppmann', status: 'reading', progress: 55, tags: ['databases', 'systems'], notes: 'Dense but essential. Chapter on replication is gold.', folder: 'f3' },
+    { id: uid(), type: 'book', title: 'Clean Architecture', author: 'Robert C. Martin', status: 'queued', progress: 0, tags: ['architecture'], notes: '', folder: 'f3' },
+    { id: uid(), type: 'code', title: 'React', author: 'Meta / npm', status: 'done', progress: 100, tags: ['frontend', 'js'], notes: 'Hooks clicked after building a side project.', folder: 'f2' },
+    { id: uid(), type: 'code', title: 'Pandas', author: 'PyData / pip', status: 'reading', progress: 70, tags: ['python', 'data'], notes: 'GroupBy is powerful.', folder: 'f1' },
+    { id: uid(), type: 'code', title: 'LangChain', author: 'LangChain AI', status: 'reading', progress: 30, tags: ['python', 'llm', 'ai'], notes: 'Still exploring chains.', folder: 'f1' },
+    { id: uid(), type: 'resource', title: 'Full Stack Open', author: 'Univ. of Helsinki', status: 'done', progress: 100, tags: ['js', 'fullstack'], notes: 'Best free web dev course.', folder: 'f2' },
+    { id: uid(), type: 'resource', title: 'CS50 AI with Python', author: 'Harvard / edX', status: 'reading', progress: 45, tags: ['ai', 'python'], notes: 'Lecture 4 on neural nets was a lightbulb moment.', folder: 'f1' },
+  ];
+  state.notes = [
+    { id: uid(), title: 'React Hooks summary', body: 'useState, useEffect, useMemo, useCallback — master these first.', date: new Date().toISOString() },
+    { id: uid(), title: 'ML study plan', body: '1. Linear algebra basics\n2. Probability theory\n3. Intro to ML (Andrew Ng)\n4. Hands-on with sklearn', date: new Date().toISOString() },
+  ];
+  state.reminders = [
+    { id: uid(), text: 'Finish React chapter 7', date: new Date(Date.now() + 86400000 * 2).toISOString().slice(0, 10), done: false },
+    { id: uid(), text: 'Review Pandas notes', date: new Date(Date.now() + 86400000 * 5).toISOString().slice(0, 10), done: false },
+  ];
+  save();
+}
+
+// ── Clock ──
+function tickClock() {
+  const now = new Date();
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('clock-time').textContent = now.toTimeString().slice(0, 8);
+  document.getElementById('clock-date').textContent = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+}
+setInterval(tickClock, 1000); tickClock();
+
+// ── Config ──
+const TYPE_CFG = {
+  book:     { icon: '📗', color: 'amber',  label: 'Book' },
+  code:     { icon: '📦', color: 'teal',   label: 'Code Lib' },
+  resource: { icon: '🎓', color: 'violet', label: 'Resource' }
+};
+const STATUS_LABEL = { reading: 'In Progress', done: 'Done', queued: 'Queued' };
+
+// ── Navigation ──
+function navTo(view, btn) {
+  activeNav = view; activeFolder = null;
+  document.querySelectorAll('#main-nav button').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderContent();
+}
+
+function openFolder(fid) {
+  activeFolder = fid; activeNav = 'folder';
+  document.querySelectorAll('#main-nav button').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.folder-item').forEach(el => el.classList.toggle('active', el.dataset.fid === fid));
+  renderContent();
+}
+
+// ── Render Main ──
+function renderContent() {
+  updateNavCounts();
+  renderFolderList();
+  const q = (document.getElementById('global-search').value || '').toLowerCase();
+  let filtered = state.entries.filter(e => {
+    if (activeNav === 'books') return e.type === 'book';
+    if (activeNav === 'code') return e.type === 'code';
+    if (activeNav === 'resources') return e.type === 'resource';
+    if (activeNav === 'folder') return e.folder === activeFolder;
+    return true;
+  }).filter(e => {
+    if (!q) return true;
+    return e.title.toLowerCase().includes(q) || (e.author || '').toLowerCase().includes(q) || (e.tags || []).some(t => t.includes(q));
+  });
+
+  let title = 'All <span>Libraries</span>';
+  if (activeNav === 'books') title = '📗 <span>Books</span>';
+  else if (activeNav === 'code') title = '📦 <span>Code Libraries</span>';
+  else if (activeNav === 'resources') title = '🎓 <span>Resources</span>';
+  else if (activeNav === 'folder') {
+    const f = state.folders.find(x => x.id === activeFolder);
+    if (f) title = `${f.icon} <span>${f.name}</span>`;
+  }
+  document.getElementById('topbar-title').innerHTML = title;
+
+  const total = state.entries.length;
+  const done = state.entries.filter(e => e.status === 'done').length;
+  const inprog = state.entries.filter(e => e.status === 'reading').length;
+  const books = state.entries.filter(e => e.type === 'book').length;
+  const codeLen = state.entries.filter(e => e.type === 'code').length;
+  const resLen = state.entries.filter(e => e.type === 'resource').length;
+  const donePct = total ? Math.round(done / total * 100) : 0;
+  const booksPct = books ? Math.round(state.entries.filter(e => e.type === 'book' && e.status === 'done').length / books * 100) : 0;
+  const codePct = codeLen ? Math.round(state.entries.filter(e => e.type === 'code' && e.status === 'done').length / codeLen * 100) : 0;
+  const resPct = resLen ? Math.round(state.entries.filter(e => e.type === 'resource' && e.status === 'done').length / resLen * 100) : 0;
+
+  let html = `<div class="stat-row">
+    <div class="stat-card"><p class="stat-label">Total Entries</p><p class="stat-num amber">${total}</p><p class="stat-sub">${inprog} in progress</p><div class="mini-bar"><div class="mini-fill amber" style="width:${donePct}%"></div></div></div>
+    <div class="stat-card"><p class="stat-label">Books</p><p class="stat-num blue">${books}</p><p class="stat-sub">${booksPct}% done</p><div class="mini-bar"><div class="mini-fill blue" style="width:${booksPct}%"></div></div></div>
+    <div class="stat-card"><p class="stat-label">Code Libs</p><p class="stat-num teal">${codeLen}</p><p class="stat-sub">${codePct}% mastered</p><div class="mini-bar"><div class="mini-fill teal" style="width:${codePct}%"></div></div></div>
+    <div class="stat-card"><p class="stat-label">Resources</p><p class="stat-num violet">${resLen}</p><p class="stat-sub">${resPct}% completed</p><div class="mini-bar"><div class="mini-fill violet" style="width:${resPct}%"></div></div></div>
+  </div>`;
+
+  const pinned = state.folders.filter(f => f.pinned);
+  if (pinned.length && activeNav !== 'folder') {
+    html += `<div class="section-head"><h2>⭐ Pinned Folders</h2></div>`;
+    html += `<div class="pinned-row">${pinned.map(f => `<div class="pinned-folder-chip" onclick="openFolder('${f.id}')">${f.icon} ${esc(f.name)} <span style="opacity:0.5;font-size:10px">${state.entries.filter(e => e.folder === f.id).length}</span></div>`).join('')}</div>`;
+  }
+
+  html += `<div class="section-head"><h2>${activeNav === 'folder' ? 'Folder Entries' : 'Library Entries'} (${filtered.length})</h2>
+    <div class="section-head-actions">
+      <button class="filter-btn active" onclick="filterStatus(this,'all')">All</button>
+      <button class="filter-btn" onclick="filterStatus(this,'reading')">In Progress</button>
+      <button class="filter-btn" onclick="filterStatus(this,'done')">Done</button>
+      <button class="filter-btn" onclick="filterStatus(this,'queued')">Queued</button>
+    </div></div>`;
+
+  if (!filtered.length) {
+    html += `<div class="cards-grid"><div class="empty"><div class="empty-icon">📭</div><p>No entries here yet.<br>Hit <strong>+ Add Entry</strong> to log something new.</p></div></div>`;
+  } else {
+    html += `<div class="cards-grid" id="cards-grid-inner">`;
+    filtered.forEach(e => {
+      const cfg = TYPE_CFG[e.type];
+      const folder = state.folders.find(f => f.id === e.folder);
+      const pct = e.progress || 0;
+      html += `<div class="lib-card ${cfg.color}" onclick="openEditEntry('${e.id}')">
+        <div class="card-actions"><button class="ca-btn del" onclick="deleteEntry(event,'${e.id}')" title="Delete">🗑</button></div>
+        <div class="card-header">
+          <div class="card-icon-wrap ${cfg.color}">${cfg.icon}</div>
+          <span class="card-badge ${e.status}">${STATUS_LABEL[e.status]}</span>
+        </div>
+        <div class="card-title">${esc(e.title)}</div>
+        <div class="card-author">${esc(e.author || '')}</div>
+        ${e.tags && e.tags.length ? `<div class="card-tags">${e.tags.map(t => `<span class="ctag">${esc(t)}</span>`).join('')}</div>` : ''}
+        ${folder ? `<div style="font-size:10px;color:#888;margin-top:3px">${folder.icon} ${esc(folder.name)}</div>` : ''}
+        <div class="card-prog">
+          <div class="prog-row"><span>Progress</span><span>${pct}%</span></div>
+          <div class="prog-track"><div class="prog-fill ${cfg.color}" style="width:${pct}%"></div></div>
+        </div>
+        ${e.notes ? `<div class="card-note">${esc(e.notes.slice(0, 80))}${e.notes.length > 80 ? '…' : ''}</div>` : ''}
+      </div>`;
+    });
+    html += `</div>`;
+  }
+  document.getElementById('main-content').innerHTML = html;
+}
+
+function filterStatus(btn, status) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const q = (document.getElementById('global-search').value || '').toLowerCase();
+  let filtered = state.entries.filter(e => {
+    if (activeNav === 'books') return e.type === 'book';
+    if (activeNav === 'code') return e.type === 'code';
+    if (activeNav === 'resources') return e.type === 'resource';
+    if (activeNav === 'folder') return e.folder === activeFolder;
+    return true;
+  }).filter(e => {
+    if (!q) return true;
+    return e.title.toLowerCase().includes(q) || (e.author || '').toLowerCase().includes(q) || (e.tags || []).some(t => t.includes(q));
+  }).filter(e => status === 'all' || e.status === status);
+
+  const grid = document.getElementById('cards-grid-inner');
+  if (!grid) return;
+  if (!filtered.length) { grid.innerHTML = `<div class="empty"><div class="empty-icon">🔎</div><p>No entries match this filter.</p></div>`; return; }
+  grid.innerHTML = filtered.map(e => {
+    const cfg = TYPE_CFG[e.type];
+    const folder = state.folders.find(f => f.id === e.folder);
+    const pct = e.progress || 0;
+    return `<div class="lib-card ${cfg.color}" onclick="openEditEntry('${e.id}')">
+      <div class="card-actions"><button class="ca-btn del" onclick="deleteEntry(event,'${e.id}')" title="Delete">🗑</button></div>
+      <div class="card-header"><div class="card-icon-wrap ${cfg.color}">${cfg.icon}</div><span class="card-badge ${e.status}">${STATUS_LABEL[e.status]}</span></div>
+      <div class="card-title">${esc(e.title)}</div>
+      <div class="card-author">${esc(e.author || '')}</div>
+      ${e.tags && e.tags.length ? `<div class="card-tags">${e.tags.map(t => `<span class="ctag">${esc(t)}</span>`).join('')}</div>` : ''}
+      ${folder ? `<div style="font-size:10px;color:#888;margin-top:3px">${folder.icon} ${esc(folder.name)}</div>` : ''}
+      <div class="card-prog"><div class="prog-row"><span>Progress</span><span>${pct}%</span></div><div class="prog-track"><div class="prog-fill ${cfg.color}" style="width:${pct}%"></div></div></div>
+      ${e.notes ? `<div class="card-note">${esc(e.notes.slice(0, 80))}${e.notes.length > 80 ? '…' : ''}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function updateNavCounts() {
+  document.getElementById('nc-all').textContent = state.entries.length;
+  document.getElementById('nc-books').textContent = state.entries.filter(e => e.type === 'book').length;
+  document.getElementById('nc-code').textContent = state.entries.filter(e => e.type === 'code').length;
+  document.getElementById('nc-res').textContent = state.entries.filter(e => e.type === 'resource').length;
+}
+
+// ── Folders ──
+function renderFolderList() {
+  const el = document.getElementById('folder-list');
+  if (!state.folders.length) { el.innerHTML = '<p style="font-size:12px;color:#8899aa;padding:8px 10px">No folders yet.</p>'; return; }
+  el.innerHTML = state.folders.map(f => `
+    <div class="folder-item${activeFolder === f.id ? ' active' : ''}" data-fid="${f.id}" onclick="openFolder('${f.id}')">
+      <span>${f.icon}</span>
+      <span class="folder-name">${esc(f.name)}</span>
+      <button class="folder-pin-btn${f.pinned ? ' pinned' : ''}" onclick="togglePin(event,'${f.id}')" title="${f.pinned ? 'Unpin' : 'Pin'}">${f.pinned ? '⭐' : '☆'}</button>
+    </div>`).join('');
+}
+
+function togglePin(e, fid) {
+  e.stopPropagation();
+  const f = state.folders.find(x => x.id === fid);
+  if (f) { f.pinned = !f.pinned; save(); renderContent(); toast(f.pinned ? `📌 "${f.name}" pinned` : `Unpinned "${f.name}"`, 'info'); }
+}
+
+function pickIcon(el) {
+  document.querySelectorAll('#icon-picker span').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  chosenIcon = el.dataset.icon;
+}
+
+function saveFolder() {
+  const name = document.getElementById('folder-name-input').value.trim();
+  if (!name) { toast('Enter a folder name', 'error'); return; }
+  state.folders.push({ id: 'f' + uid(), name, icon: chosenIcon, pinned: false });
+  save(); closePanel('panel-new-folder');
+  document.getElementById('folder-name-input').value = '';
+  renderContent(); toast(`📁 Folder "${name}" created`, 'success');
+}
+
+function renderFolderSearch(q) {
+  const res = document.getElementById('folder-search-results');
+  const lq = (q || '').toLowerCase();
+  const matches = state.folders.filter(f => !lq || f.name.toLowerCase().includes(lq));
+  if (!matches.length) { res.innerHTML = '<p style="color:#aaa;font-size:13px">No folders found.</p>'; return; }
+  res.innerHTML = matches.map(f => `
+    <div class="folder-item" style="border:1px solid #dce3ea;border-radius:6px;margin-bottom:6px;" onclick="closePanel('panel-search-folder');openFolder('${f.id}')">
+      <span>${f.icon}</span>
+      <span class="folder-name" style="color:#333">${esc(f.name)}</span>
+      <span style="font-size:11px;color:#aaa;">${state.entries.filter(e => e.folder === f.id).length} entries</span>
+    </div>`).join('');
+}
+
+// ── Entries ──
+function openAddEntry() {
+  editingId = null;
+  document.getElementById('entry-panel-title').textContent = 'Add Entry';
+  document.getElementById('e-type').value = 'book';
+  document.getElementById('e-status').value = 'reading';
+  ['e-title','e-author','e-tags','e-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('e-progress').value = 0;
+  document.getElementById('epv').textContent = '0%';
+  populateFolderSelect();
+  openPanel('panel-entry');
+}
+
+function openEditEntry(id) {
+  editingId = id;
+  const e = state.entries.find(x => x.id === id);
+  if (!e) return;
+  document.getElementById('entry-panel-title').textContent = 'Edit Entry';
+  document.getElementById('e-type').value = e.type;
+  document.getElementById('e-status').value = e.status;
+  document.getElementById('e-title').value = e.title;
+  document.getElementById('e-author').value = e.author || '';
+  document.getElementById('e-tags').value = (e.tags || []).join(', ');
+  document.getElementById('e-notes').value = e.notes || '';
+  document.getElementById('e-progress').value = e.progress || 0;
+  document.getElementById('epv').textContent = (e.progress || 0) + '%';
+  populateFolderSelect(e.folder);
+  openPanel('panel-entry');
+}
+
+function populateFolderSelect(selected) {
+  const sel = document.getElementById('e-folder');
+  sel.innerHTML = '<option value="">No Folder</option>' + state.folders.map(f => `<option value="${f.id}"${f.id === selected ? ' selected' : ''}>${f.icon} ${esc(f.name)}</option>`).join('');
+}
+
+function saveEntry() {
+  const title = document.getElementById('e-title').value.trim();
+  if (!title) { toast('Title is required', 'error'); return; }
+  const entry = {
+    id: editingId || uid(),
+    type: document.getElementById('e-type').value,
+    title,
+    author: document.getElementById('e-author').value.trim(),
+    status: document.getElementById('e-status').value,
+    tags: document.getElementById('e-tags').value.split(',').map(t => t.trim()).filter(Boolean),
+    progress: parseInt(document.getElementById('e-progress').value) || 0,
+    notes: document.getElementById('e-notes').value.trim(),
+    folder: document.getElementById('e-folder').value || null,
+  };
+  if (editingId) {
+    const idx = state.entries.findIndex(x => x.id === editingId);
+    if (idx !== -1) state.entries[idx] = entry;
+    toast(`✏️ "${title}" updated`, 'success');
+  } else {
+    state.entries.unshift(entry);
+    toast(`✅ "${title}" added`, 'success');
+  }
+  save(); closePanel('panel-entry'); renderContent();
+}
+
+function deleteEntry(e, id) {
+  e.stopPropagation();
+  const idx = state.entries.findIndex(x => x.id === id);
+  if (idx !== -1) {
+    const entry = { ...state.entries[idx], deletedAt: new Date().toISOString() };
+    state.deleted.unshift(entry);
+    state.entries.splice(idx, 1);
+    save(); renderContent();
+    toast(`🗑 "${entry.title}" moved to trash`, 'info');
+  }
+}
+
+// ── Notes ──
+let currentNoteId = null;
+
+function newNote() {
+  currentNoteId = null;
+  renderNotesEditor(null);
+  document.querySelectorAll('.note-item').forEach(n => n.classList.remove('active'));
+}
+
+function renderNotes() {
+  const list = document.getElementById('notes-list');
+  if (!state.notes.length) { list.innerHTML = '<p style="color:#aaa;font-size:12px">No notes yet.</p>'; return; }
+  list.innerHTML = state.notes.map(n => `
+    <div class="note-item${currentNoteId === n.id ? ' active' : ''}" onclick="selectNote('${n.id}')">
+      <div class="note-item-title">${esc(n.title || 'Untitled')}</div>
+      <div class="note-item-preview">${esc((n.body || '').slice(0, 40))}</div>
+      <div class="note-item-date">${new Date(n.date).toLocaleDateString()}</div>
+    </div>`).join('');
+}
+
+function selectNote(id) {
+  currentNoteId = id;
+  const n = state.notes.find(x => x.id === id);
+  renderNotesEditor(n);
+  renderNotes();
+}
+
+function renderNotesEditor(n) {
+  const ed = document.getElementById('notes-editor');
+  if (!n) { ed.innerHTML = '<p style="color:#aaa;font-size:13px">Select a note or create a new one.</p>'; return; }
+  ed.innerHTML = `
+    <input id="note-title" type="text" value="${esc(n.title || '')}" placeholder="Note title…" />
+    <textarea id="note-body" style="height:180px">${esc(n.body || '')}</textarea>`;
+}
+
+function saveNote() {
+  const titleEl = document.getElementById('note-title');
+  const bodyEl = document.getElementById('note-body');
+  if (!titleEl) { toast('Select or create a note first', 'error'); return; }
+  const title = titleEl.value.trim() || 'Untitled';
+  const body = bodyEl.value;
+  if (currentNoteId) {
+    const n = state.notes.find(x => x.id === currentNoteId);
+    if (n) { n.title = title; n.body = body; n.date = new Date().toISOString(); }
+  } else {
+    const n = { id: uid(), title, body, date: new Date().toISOString() };
+    state.notes.unshift(n);
+    currentNoteId = n.id;
+  }
+  save(); renderNotes(); toast('📝 Note saved', 'success');
+}
+
+function deleteNote() {
+  if (!currentNoteId) { toast('No note selected', 'error'); return; }
+  state.notes = state.notes.filter(x => x.id !== currentNoteId);
+  currentNoteId = null;
+  save(); renderNotes(); renderNotesEditor(null); toast('Note deleted', 'info');
+}
+
+// ── Reminders ──
+function addReminder() {
+  const text = document.getElementById('rem-text').value.trim();
+  if (!text) { toast('Enter a reminder', 'error'); return; }
+  state.reminders.push({ id: uid(), text, date: document.getElementById('rem-date').value, done: false });
+  document.getElementById('rem-text').value = '';
+  document.getElementById('rem-date').value = '';
+  save(); renderReminders(); toast('🔔 Reminder added', 'success');
+}
+
+function toggleReminder(id) {
+  const r = state.reminders.find(x => x.id === id);
+  if (r) { r.done = !r.done; save(); renderReminders(); }
+}
+
+function deleteReminder(id) {
+  state.reminders = state.reminders.filter(x => x.id !== id);
+  save(); renderReminders();
+}
+
+function renderReminders() {
+  const el = document.getElementById('reminder-list');
+  if (!el) return;
+  if (!state.reminders.length) { el.innerHTML = '<p style="color:#aaa;font-size:13px">No reminders yet.</p>'; return; }
+  el.innerHTML = state.reminders.map(r => `
+    <div class="rem-item${r.done ? ' done-item' : ''}">
+      <div class="rem-check${r.done ? ' done' : ''}" onclick="toggleReminder('${r.id}')">${r.done ? '✓' : ''}</div>
+      <span class="rem-text">${esc(r.text)}</span>
+      ${r.date ? `<span class="rem-date">${r.date}</span>` : ''}
+      <button class="rem-del" onclick="deleteReminder('${r.id}')">✕</button>
+    </div>`).join('');
+}
+
+// ── Calendar ──
+function renderCalendar() {
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const y = calDate.getFullYear(), m = calDate.getMonth();
+  document.getElementById('cal-month-label').textContent = `${months[m]} ${y}`;
+  const firstDay = new Date(y, m, 1).getDay();
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const today = new Date();
+  const days = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+  let html = days.map(d => `<div class="cal-day-name">${d}</div>`).join('');
+  for (let i = 0; i < firstDay; i++) {
+    const prevDate = new Date(y, m, -firstDay + i + 1);
+    html += `<div class="cal-day other-month">${prevDate.getDate()}</div>`;
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const hasRem = state.reminders.some(r => r.date === dateStr);
+    const isToday = today.getFullYear() === y && today.getMonth() === m && today.getDate() === d;
+    html += `<div class="cal-day${isToday ? ' today' : ''}${hasRem ? ' has-reminder' : ''}" onclick="selectCalDay('${dateStr}')">${d}</div>`;
+  }
+  document.getElementById('cal-grid').innerHTML = html;
+}
+
+function calNav(dir) { calDate = new Date(calDate.getFullYear(), calDate.getMonth() + dir, 1); renderCalendar(); }
+
+function selectCalDay(dateStr) {
+  const rems = state.reminders.filter(r => r.date === dateStr);
+  const el = document.getElementById('cal-reminders-for-day');
+  if (!rems.length) { el.innerHTML = `<span style="color:#aaa">No reminders for ${dateStr}.</span>`; return; }
+  el.innerHTML = rems.map(r => `<div style="font-size:13px;padding:5px 0;border-bottom:1px solid #eee">${r.done ? '✅' : '🔔'} ${esc(r.text)}</div>`).join('');
+}
+
+// ── Calculator ──
+function calcInput(v) {
+  calcExpr += v;
+  document.getElementById('calc-expr').textContent = calcExpr;
+  try {
+    const r = Function('"use strict";return (' + calcExpr + ')')();
+    if (!isNaN(r) && isFinite(r)) document.getElementById('calc-result').textContent = parseFloat(r.toFixed(10)).toString();
+  } catch(e) {}
+}
+function calcClear() { calcExpr = ''; document.getElementById('calc-expr').textContent = ''; document.getElementById('calc-result').textContent = '0'; }
+function calcEval() {
+  try {
+    const r = Function('"use strict";return (' + calcExpr + ')')();
+    document.getElementById('calc-result').textContent = parseFloat(r.toFixed(10)).toString();
+    document.getElementById('calc-expr').textContent = calcExpr + ' =';
+    calcExpr = r.toString();
+  } catch(e) { document.getElementById('calc-result').textContent = 'Error'; calcExpr = ''; }
+}
+
+// ── Files ──
+function handleDragOver(e) { e.preventDefault(); document.getElementById('upload-zone').classList.add('drag'); }
+function handleDrop(e) { e.preventDefault(); document.getElementById('upload-zone').classList.remove('drag'); processFiles(e.dataTransfer.files); }
+function handleFileInput(inp) { processFiles(inp.files); inp.value = ''; }
+
+function processFiles(files) {
+  for (const f of files) {
+    const mb = (f.size / 1024 / 1024).toFixed(2);
+    if (state.files.find(x => x.name === f.name)) { toast(`"${f.name}" already exists`, 'info'); continue; }
+    state.files.push({ id: uid(), name: f.name, size: mb, type: f.type || 'unknown', date: new Date().toISOString() });
+  }
+  save(); renderFileList();
+  if (files.length) toast(`📎 ${files.length} file(s) added`, 'success');
+}
+
+function renderFileList() {
+  const el = document.getElementById('file-list');
+  if (!el) return;
+  if (!state.files.length) { el.innerHTML = ''; return; }
+  const icons = { pdf: '📄', image: '🖼️', text: '📃', json: '🗂️', csv: '📊', zip: '🗜️', default: '📁' };
+  el.innerHTML = state.files.map(f => {
+    const ext = f.name.split('.').pop().toLowerCase();
+    const icon = icons[f.type.includes('pdf') ? 'pdf' : f.type.includes('image') ? 'image' : f.type.includes('text') ? 'text' : ext] || icons.default;
+    return `<div class="file-item">
+      <span class="file-icon">${icon}</span>
+      <div class="file-info"><div class="file-name">${esc(f.name)}</div><div class="file-size">${f.size} MB · ${new Date(f.date).toLocaleDateString()}</div></div>
+      <div class="file-actions">
+        <button class="fa-btn" onclick="downloadFile('${f.id}')" title="Download">⬇</button>
+        <button class="fa-btn" onclick="shareFile('${f.id}')" title="Share">↗</button>
+        <button class="fa-btn" style="color:#e04040" onclick="removeFile('${f.id}')" title="Delete">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function downloadFile(id) { const f = state.files.find(x => x.id === id); if (f) toast(`⬇ Downloading "${f.name}"…`, 'info'); }
+function shareFile(id) { const f = state.files.find(x => x.id === id); if (f) toast(`↗ Share link copied for "${f.name}"`, 'success'); }
+function removeFile(id) { state.files = state.files.filter(x => x.id !== id); save(); renderFileList(); }
+
+// ── Deleted ──
+function renderDeletedList() {
+  const el = document.getElementById('deleted-list');
+  if (!el) return;
+  if (!state.deleted.length) { el.innerHTML = '<p style="color:#aaa;font-size:13px">Nothing in trash.</p>'; return; }
+  el.innerHTML = state.deleted.map(e => `
+    <div class="del-item">
+      <div class="del-info">
+        <div class="del-title">${TYPE_CFG[e.type]?.icon || '📄'} ${esc(e.title)}</div>
+        <div class="del-meta">Deleted ${new Date(e.deletedAt).toLocaleDateString()}</div>
+      </div>
+      <div class="del-actions">
+        <button class="btn btn-sm" onclick="restoreEntry('${e.id}')">↩ Restore</button>
+        <button class="btn btn-red btn-sm" onclick="permanentDelete('${e.id}')">✕ Delete</button>
+      </div>
+    </div>`).join('');
+}
+
+function restoreEntry(id) {
+  const idx = state.deleted.findIndex(x => x.id === id);
+  if (idx === -1) return;
+  const e = { ...state.deleted[idx] }; delete e.deletedAt;
+  state.entries.unshift(e); state.deleted.splice(idx, 1);
+  save(); renderDeletedList(); renderContent(); toast(`↩ "${e.title}" restored`, 'success');
+}
+
+function permanentDelete(id) {
+  const e = state.deleted.find(x => x.id === id);
+  state.deleted = state.deleted.filter(x => x.id !== id);
+  save(); renderDeletedList(); if (e) toast(`Permanently deleted "${e.title}"`, 'info');
+}
+
+function emptyTrash() { state.deleted = []; save(); renderDeletedList(); toast('Trash emptied', 'info'); }
+
+// ── Export / Share ──
+function exportData() {
+  const blob = new Blob([JSON.stringify({ entries: state.entries, folders: state.folders, notes: state.notes, reminders: state.reminders }, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'learning-log-export.json'; a.click();
+  toast('⬇ Export downloaded', 'success');
+}
+function shareData() {
+  const url = window.location.href;
+  if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => toast('↗ Link copied to clipboard', 'success'));
+  else toast('↗ Copy this URL to share', 'info');
+}
+
+// ── Panels ──
+function openPanel(id) {
+  document.getElementById(id).classList.add('open');
+  if (id === 'panel-notes') { renderNotes(); renderNotesEditor(currentNoteId ? state.notes.find(x => x.id === currentNoteId) : null); }
+  if (id === 'panel-reminders') renderReminders();
+  if (id === 'panel-calendar') renderCalendar();
+  if (id === 'panel-deleted') renderDeletedList();
+  if (id === 'panel-upload') renderFileList();
+  if (id === 'panel-search-folder') renderFolderSearch('');
+  if (id === 'panel-settings') updateProfileUI(getActiveAccount());
+  if (id === 'panel-switch-account') renderAccountList();
+}
+function closePanel(id) { document.getElementById(id).classList.remove('open'); }
+function bgClose(e, id) { if (e.target === document.getElementById(id)) closePanel(id); }
+
+// ── Toast ──
+function toast(msg, type = 'info') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`; t.textContent = msg;
+  c.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2800);
+}
+
+// ── Utility ──
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── Account Management ──
+const ACCOUNTS_KEY = 'll_accounts';
+const ACTIVE_KEY   = 'll_active_account';
+
+function getAccounts() {
+  try { return JSON.parse(localStorage.getItem(ACCOUNTS_KEY)) || []; } catch(e) { return []; }
+}
+function saveAccounts(accounts) {
+  localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
+}
+function getActiveAccount() {
+  try { return JSON.parse(localStorage.getItem(ACTIVE_KEY)); } catch(e) { return null; }
+}
+function setActiveAccount(account) {
+  localStorage.setItem(ACTIVE_KEY, JSON.stringify(account));
+}
+
+// initApp defined above — do not redefine here
+
+function loadAccountData(account) {
+  const key = 'llsimple_' + account.id;
+  try {
+    const d = localStorage.getItem(key);
+    if (d) state = JSON.parse(d);
+    else { state = { entries:[], folders:[], notes:[], reminders:[], files:[], deleted:[] }; seed(); }
+  } catch(e) {
+    state = { entries:[], folders:[], notes:[], reminders:[], files:[], deleted:[] }; seed();
+  }
+}
+
+function save() {
+  const active = getActiveAccount();
+  const key = active ? 'llsimple_' + active.id : SK;
+  localStorage.setItem(key, JSON.stringify(state));
+}
+
+function updateProfileUI(account) {
+  if (!account) return;
+  const initials = account.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  document.getElementById('sidebar-avatar').textContent = initials;
+  document.getElementById('sidebar-name').textContent = account.name;
+  document.getElementById('sidebar-email').textContent = account.email;
+  document.getElementById('settings-avatar').textContent = initials;
+  document.getElementById('settings-name').textContent = account.name;
+  document.getElementById('settings-email').textContent = account.email;
+}
+
+function showLogin(mode) {
+  document.getElementById('login-screen').style.display = 'flex';
+  const accounts = getAccounts();
+  const savedWrap = document.getElementById('saved-accounts-wrap');
+  const divider = document.getElementById('login-divider');
+
+  if (mode === 'add' || !accounts.length) {
+    savedWrap.style.display = accounts.length ? '' : 'none';
+    divider && (divider.style.display = accounts.length ? '' : 'none');
+    document.getElementById('login-heading').textContent = 'Add Account';
+    document.getElementById('login-sub').textContent = 'Enter details for the new account.';
+  } else {
+    document.getElementById('login-heading').textContent = 'Welcome back';
+    document.getElementById('login-sub').textContent = 'Sign in or pick a saved account.';
+  }
+
+  const list = document.getElementById('saved-accounts-list');
+  if (accounts.length) {
+    list.innerHTML = accounts.map((a, i) => {
+      const initials = a.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+      const colors = ['', 'blue', 'teal', 'violet'];
+      const colorClass = colors[i % colors.length];
+      return `<button class="login-account-btn" onclick="switchToAccount('${a.id}')">
+        <div class="account-avatar ${colorClass}" style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px;color:#fff;flex-shrink:0;">${initials}</div>
+        <div style="flex:1;text-align:left;">
+          <div style="font-size:13px;font-weight:600;">${esc(a.name)}</div>
+          <div style="font-size:11px;color:#888;">${esc(a.email)}</div>
+        </div>
+        <span style="font-size:18px;">→</span>
+      </button>`;
+    }).join('');
+  } else {
+    list.innerHTML = '';
+  }
+}
+
+function doLogin() {
+  const name  = document.getElementById('login-name').value.trim();
+  const email = document.getElementById('login-email').value.trim();
+  if (!name)  { toast('Please enter your name', 'error'); return; }
+  if (!email) { toast('Please enter your email', 'error'); return; }
+
+  let accounts = getAccounts();
+  let account = accounts.find(a => a.email.toLowerCase() === email.toLowerCase());
+  if (!account) {
+    account = { id: uid(), name, email };
+    accounts.push(account);
+    saveAccounts(accounts);
+  } else {
+    account.name = name;
+    saveAccounts(accounts);
+  }
+  setActiveAccount(account);
+  // Sync sessionStorage so profile name survives refresh
+  const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  sessionStorage.setItem('ll_session', JSON.stringify({ uid: account.id, name: account.name, email: account.email, initials }));
+  const loginScreen = document.getElementById('login-screen');
+  if (loginScreen) loginScreen.style.display = 'none';
+  document.getElementById('login-name').value = '';
+  document.getElementById('login-email').value = '';
+  loadAccountData(account);
+  updateProfileUI(account);
+  renderContent();
+  toast(`👋 Welcome, ${account.name}!`, 'success');
+}
+
+function switchToAccount(id) {
+  const accounts = getAccounts();
+  const account = accounts.find(a => a.id === id);
+  if (!account) return;
+  setActiveAccount(account);
+  // Keep sessionStorage in sync so name/email survive page refresh
+  const initials = account.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  sessionStorage.setItem('ll_session', JSON.stringify({ uid: account.id, name: account.name, email: account.email, initials }));
+  const loginScreen = document.getElementById('login-screen');
+  if (loginScreen) loginScreen.style.display = 'none';
+  closePanel('panel-switch-account');
+  loadAccountData(account);
+  updateProfileUI(account);
+  renderContent();
+  toast(`🔄 Switched to ${account.name}`, 'success');
+}
+
+function renderAccountList() {
+  const accounts = getAccounts();
+  const active = getActiveAccount();
+  const list = document.getElementById('account-list');
+  if (!accounts.length) {
+    list.innerHTML = '<p style="color:#aaa;font-size:13px;">No saved accounts.</p>';
+    return;
+  }
+  const colors = ['', 'blue', 'teal', 'violet'];
+  list.innerHTML = accounts.map((a, i) => {
+    const initials = a.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    const isActive = active && active.id === a.id;
+    const bgColors = { '': '#e6a817', blue: '#4a9eff', teal: '#00c89a', violet: '#8b72f0' };
+    const colorKey = colors[i % colors.length];
+    const bg = bgColors[colorKey];
+    return `<div class="account-item${isActive ? ' active-account' : ''}" onclick="switchToAccount('${a.id}')">
+      <div class="account-avatar" style="background:${bg};color:${colorKey ? '#fff' : '#000'}">${initials}</div>
+      <div class="account-info">
+        <div class="account-name">${esc(a.name)}</div>
+        <div class="account-email">${esc(a.email)}</div>
+      </div>
+      ${isActive ? '<span class="account-check">✓</span>' : ''}
+    </div>`;
+  }).join('');
+}
+
+// logout() handles sign-out (defined above)
+
+// ── Init ──
+load();
+initApp();
+</script>
+</body>
+</html>
